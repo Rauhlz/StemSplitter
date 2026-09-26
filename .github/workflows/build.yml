@@ -1,0 +1,104 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  # ------------------------------------------------------------------ the plugin
+  plugin:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: windows-x64,          os: windows-latest, cmake_args: "" }
+          - { name: windows-x64-directml, os: windows-latest, cmake_args: "-DSTEMSPLITTER_DIRECTML=ON" }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release ${{ matrix.cmake_args }}
+
+      - name: Build
+        run: cmake --build build --config Release --parallel 4
+
+      - name: Package
+        shell: bash
+        run: |
+          mkdir -p "dist/Stem Splitter"
+          cp -R "build/StemSplitter_artefacts/Release/VST3/Stem Splitter.vst3" "dist/Stem Splitter/"
+          mkdir -p "dist/Stem Splitter/cli"
+          cp -R build/StemSplitterCli_artefacts/Release/* "dist/Stem Splitter/cli/"
+          cp README.md LICENSE THIRD_PARTY_NOTICES.md "dist/Stem Splitter/"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: StemSplitter-${{ matrix.name }}
+          path: dist
+
+  # ------------------------------------------------------------------ the AI model
+  model:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        variant: ["", "--six-stems"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install
+        run: |
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install -r tools/requirements.txt
+          python -m pip install --no-deps -r tools/requirements-nodeps.txt
+
+      - name: Export and verify
+        run: python tools/export_model.py ${{ matrix.variant }} --out models
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: model${{ matrix.variant == '' && '-htdemucs' || '-htdemucs_6s' }}
+          path: models/*.onnx
+
+  # ------------------------------------------------------------------ tests (dummy model, no weights needed)
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libasound2-dev libfreetype-dev libfontconfig1-dev libx11-dev \
+            libxrandr-dev libxinerama-dev libxcursor-dev libxext-dev libgl-dev
+          python -m pip install numpy scipy onnx
+
+      - name: Build
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DSTEMSPLITTER_BUILD_TESTS=ON
+          cmake --build build --parallel 4
+
+      - name: Engine tests
+        run: python tests/run_tests.py build/StemSplitterCli_artefacts/Release/stemsplitter-cli
+
+      - name: Plugin tests
+        run: |
+          cd tests && python make_dummy_model.py dummy.onnx 4
+          python - <<'PY'
+          import numpy as np
+          from scipy.io import wavfile
+          sr = 44100
+          t = np.arange(sr * 12) / sr
+          wavfile.write("song.wav", sr, np.stack([0.2*np.sin(2*np.pi*220*t), 0.2*np.sin(2*np.pi*330*t)]).T.astype(np.float32))
+          t = np.arange(sr * 240) / sr
+          wavfile.write("long.wav", sr, np.stack([0.2*np.sin(2*np.pi*220*t)]*2).T.astype(np.float32))
+          PY
+          ../build/PluginHarness_artefacts/Release/PluginHarness dummy.onnx song.wav long.wav \
+            "../build/StemSplitter_artefacts/Release/VST3/Stem Splitter.vst3"

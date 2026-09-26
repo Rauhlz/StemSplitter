@@ -1,0 +1,11 @@
+# Needed once, to convert the Demucs model to ONNX (tools/export_model.py)
+torch
+numpy
+onnx
+onnxruntime
+pyyaml
+tqdm
+einops
+julius
+omegaconf
+dora-search

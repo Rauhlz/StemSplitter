@@ -1,0 +1,4 @@
+# Installed with --no-deps: we only need their model code, not their audio I/O
+# (which would pull in an old torchaudio).
+demucs==4.0.1
+openunmix==1.3.0
