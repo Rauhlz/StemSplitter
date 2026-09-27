@@ -1,5 +1,6 @@
 # Needed once, to convert the Demucs model to ONNX (tools/export_model.py)
 torch
+torchaudio
 numpy
 onnx
 onnxruntime
