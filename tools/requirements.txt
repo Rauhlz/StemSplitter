@@ -1,6 +1,7 @@
 # Needed once, to convert the Demucs model to ONNX (tools/export_model.py)
-torch
-torchaudio
+# torch 2.5 is the version known to export HTDemucs cleanly with the classic ONNX exporter
+torch==2.5.1
+torchaudio==2.5.1
 numpy
 onnx
 onnxruntime

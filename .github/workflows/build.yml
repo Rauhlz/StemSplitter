@@ -53,7 +53,7 @@ jobs:
 
       - name: Install
         run: |
-          python -m pip install torch torchaudio --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install torch==2.5.1 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/cpu
           python -m pip install -r tools/requirements.txt
           python -m pip install --no-deps -r tools/requirements-nodeps.txt
 
@@ -63,7 +63,7 @@ jobs:
           set -o pipefail
           python tools/export_model.py ${{ matrix.variant }} --out models 2>&1 | tee export.log || {
             # Surface the end of the log as an annotation (visible on the run's summary page)
-            msg=$(tail -n 40 export.log | sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}')
+            msg=$(tail -n 12 export.log | sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}')
             echo "::error title=Model export failed::$msg"
             exit 1
           }
