@@ -23,9 +23,11 @@ takes roughly 1–3 minutes on a modern CPU, or well under a minute on a GPU.
 ### Option A: let GitHub build it (no compilers needed)
 1. Create a GitHub repository and push this folder to it.
 2. Open the **Actions** tab. The **Build** workflow runs automatically and produces:
-   - `StemSplitter-windows-x64`: the plugin for Windows (CPU)
-   - `StemSplitter-windows-x64-directml`: the plugin for Windows with GPU support
-   - `model-htdemucs` and `model-htdemucs_6s`: the converted AI models (so you can skip step 2)
+   - `StemSplitter-windows-x64-directml`: the plugin for Windows with GPU support (recommended; also works on CPU)
+   - `StemSplitter-windows-x64`: the plugin for Windows, CPU only
+   
+   Both AI models are already **inside** these plugin downloads, so you can skip step 2. The
+   plugin uses the 6-stem model by default; switch with **Model...**.
 3. Download the artifacts you need from the finished run.
 
 ### Option B: build it yourself
@@ -64,6 +66,9 @@ the model where the plugin looks for it automatically:
 | macOS | `~/Library/Application Support/StemSplitter/Models/` |
 
 If you put the `.onnx` file somewhere else, pick it in the plugin with **Model... → Choose model file...**.
+When several models are present, the plugin uses `htdemucs_6s` first, then `htdemucs`. Your choice
+in **Model...** is remembered. (Meta notes the 6-stem model's piano stem is its weakest; the other stems
+are about as good as with the 4-stem model.)
 
 ## 3. Install in FL Studio
 

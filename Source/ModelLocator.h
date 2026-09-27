@@ -24,7 +24,7 @@ struct ModelLocator
 
     static juce::Array<juce::File> findModels();
 
-    // The user's chosen model if it still exists, otherwise htdemucs.onnx, otherwise any model.
+    // The user's chosen model if it still exists, otherwise htdemucs_6s, then htdemucs, then any model.
     static juce::File findDefaultModel();
 
     static void setPreferredModel (const juce::File& file);

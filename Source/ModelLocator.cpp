@@ -69,9 +69,11 @@ juce::File ModelLocator::findDefaultModel()
 
     auto models = findModels();
 
-    for (auto& m : models)
-        if (m.getFileNameWithoutExtension().equalsIgnoreCase ("htdemucs"))
-            return m;
+    // 6 stems (adds guitar and piano) by default, then the 4-stem model
+    for (auto* preferred : { "htdemucs_6s", "htdemucs" })
+        for (auto& m : models)
+            if (m.getFileNameWithoutExtension().equalsIgnoreCase (preferred))
+                return m;
 
     return models.isEmpty() ? juce::File() : models.getFirst();
 }

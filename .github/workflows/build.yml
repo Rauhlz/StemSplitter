@@ -8,6 +8,7 @@ on:
 jobs:
   # ------------------------------------------------------------------ the plugin
   plugin:
+    needs: model   # the models are bundled inside the plugin
     strategy:
       fail-fast: false
       matrix:
@@ -24,11 +25,21 @@ jobs:
       - name: Build
         run: cmake --build build --config Release --parallel 4
 
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: model-*
+          merge-multiple: true
+          path: models
+
       - name: Package
         shell: bash
         run: |
           mkdir -p "dist/Stem Splitter"
           cp -R "build/StemSplitter_artefacts/Release/VST3/Stem Splitter.vst3" "dist/Stem Splitter/"
+          # Both AI models go inside the bundle, where the plugin finds them automatically
+          mkdir -p "dist/Stem Splitter/Stem Splitter.vst3/Contents/Resources"
+          cp models/*.onnx "dist/Stem Splitter/Stem Splitter.vst3/Contents/Resources/"
+          ls -la "dist/Stem Splitter/Stem Splitter.vst3/Contents/Resources/"
           mkdir -p "dist/Stem Splitter/cli"
           cp -R build/StemSplitterCli_artefacts/Release/* "dist/Stem Splitter/cli/"
           cp README.md LICENSE THIRD_PARTY_NOTICES.md "dist/Stem Splitter/"

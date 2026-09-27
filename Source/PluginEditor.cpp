@@ -403,7 +403,7 @@ StemSplitterEditor::StemSplitterEditor (StemSplitterProcessor& p)
         loadFile (processor.getInputFile());
 
     updateModelLabel();
-    setSize (780, 580);
+    setSize (780, 680);
     startTimerHz (30);
     timerCallback();
 }
