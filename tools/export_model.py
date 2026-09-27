@@ -216,8 +216,12 @@ def main():
     import inspect
     if "dynamo" in inspect.signature(torch.onnx.export).parameters:
         export_kwargs["dynamo"] = False   # the classic exporter is the one known to work for HTDemucs
-    with torch.no_grad():
-        torch.onnx.export(core, (mix, spec), str(out_file), **export_kwargs)
+    # nn.MultiheadAttention's inference "fast path" (aten::_native_multi_head_attention)
+    # has no ONNX equivalent, so force the regular implementation. The fast path is
+    # also only taken under no_grad, so export with autograd on.
+    if hasattr(torch.backends, "mha") and hasattr(torch.backends.mha, "set_fastpath_enabled"):
+        torch.backends.mha.set_fastpath_enabled(False)
+    torch.onnx.export(core, (mix, spec), str(out_file), **export_kwargs)
 
     # Store the stem names so the plugin can label them
     import onnx
