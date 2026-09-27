@@ -67,6 +67,7 @@ jobs:
             echo "::error title=Model export failed::$msg"
             exit 1
           }
+          grep -E "max relative difference|saved" export.log | sed 's/^ */::notice title=Model check::/'
 
       - uses: actions/upload-artifact@v4
         with:
